@@ -12,4 +12,15 @@ describe("test", () => {
     obj.age++;
     expect(value).toBe(3);
   });
+  it("effect返回值", () => {
+    let value = 0;
+    const runner = effect(() => {
+      value++;
+      return value;
+    });
+    expect(value).toBe(1);
+    const test = runner();
+    expect(value).toBe(2);
+    expect(test).toBe(value);
+  });
 });
