@@ -35,5 +35,11 @@ function triggerEvent(target, key) {
     return;
   }
   const dep = depsMap.get(key);
-  Array.from(dep).forEach((item) => item.run());
+  Array.from(dep).forEach((effect) => {
+    if (effect.schedule) {
+      effect.schedule();
+    } else {
+      effect.run();
+    }
+  });
 }
