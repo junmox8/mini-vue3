@@ -1,6 +1,6 @@
 import { reactive } from "../reactive";
-import { effect } from "../effect";
-describe("test", () => {
+import { effect, stop } from "../effect";
+describe("effect", () => {
   it("happy path", () => {
     const obj = reactive({ age: 1 });
     let value = 0;
@@ -26,6 +26,8 @@ describe("test", () => {
   it("schedule", () => {
     let dummy;
     let run;
+
+    //使用jest.fn创建模拟函数,方便搜集函数相关信息,如:参数,调用次数等。
     const schedule = jest.fn(() => {
       run = fn;
     });
@@ -47,5 +49,42 @@ describe("test", () => {
 
     run();
     expect(dummy).toBe(2);
+  });
+  it("stop", () => {
+    const obj = reactive({
+      age: 0,
+    });
+    let dummy;
+    const fn = effect(() => {
+      dummy = obj.age + 1;
+    });
+    expect(dummy).toBe(1);
+    stop(fn);
+    obj.age = 3;
+    expect(dummy).toBe(1);
+    fn();
+    expect(dummy).toBe(4);
+  });
+  it("opStop", () => {
+    const obj = reactive({
+      age: 0,
+    });
+    let dummy;
+    const onStop = jest.fn(() => {
+      console.log("我被调用了");
+    });
+    const fn = effect(
+      () => {
+        dummy = obj.age + 1;
+      },
+      {
+        onStop,
+      }
+    );
+    expect(dummy).toBe(1);
+    stop(fn);
+    obj.age = 3;
+    expect(dummy).toBe(1);
+    expect(onStop).toHaveBeenCalledTimes(1);
   });
 });

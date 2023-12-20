@@ -27,7 +27,10 @@ function trackEvent(target, key) {
     dep = new Set();
     depsMap.set(key, dep);
   }
-  dep.add(activeEffect);
+  if (activeEffect) {
+    dep.add(activeEffect);
+    activeEffect.deps.add(dep); //stop功能,收集dep
+  }
 }
 function triggerEvent(target, key) {
   const depsMap = targetMap.get(target);
@@ -37,7 +40,7 @@ function triggerEvent(target, key) {
   const dep = depsMap.get(key);
   Array.from(dep).forEach((effect) => {
     if (effect.schedule) {
-      effect.schedule();
+      effect.schedule(); //schedule优先级大于run
     } else {
       effect.run();
     }
