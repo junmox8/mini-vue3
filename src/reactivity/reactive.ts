@@ -1,5 +1,5 @@
 import { activeEffect } from "./effect";
-import { mutableHandlers, readonlyHandlers } from "./baseHandles";
+import { mutableHandlers, readonlyHandlers, reactiveFlag } from "./baseHandles";
 
 const targetMap = new Map();
 export function trackEvent(target, key) {
@@ -43,4 +43,11 @@ export function readonly(obj) {
 
 function createActiveObj(obj, type) {
   return new Proxy(obj, type);
+}
+
+export function isReactive(obj) {
+  return !!obj[reactiveFlag.IS_REACTIVE];
+}
+export function isReadonly(obj) {
+  return !!obj[reactiveFlag.IS_READONLY];
 }

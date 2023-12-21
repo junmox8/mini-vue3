@@ -2,6 +2,11 @@ import { trackEvent, triggerEvent } from "./reactive";
 
 function createGetter(isReadonly = false) {
   return function (target, key) {
+    if (key === reactiveFlag.IS_REACTIVE) {
+      return !isReadonly;
+    } else if (key === reactiveFlag.IS_READONLY) {
+      return isReadonly;
+    }
     const res = Reflect.get(target, key);
     if (!isReadonly) {
       trackEvent(target, key);
@@ -30,3 +35,8 @@ export const readonlyHandlers = {
     return true;
   },
 };
+
+export const enum reactiveFlag {
+  IS_REACTIVE = "__v_isReactive",
+  IS_READONLY = "__v_isReadOnly",
+}

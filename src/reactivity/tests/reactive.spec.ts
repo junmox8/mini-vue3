@@ -1,4 +1,4 @@
-import { reactive } from "../reactive";
+import { reactive, isReactive } from "../reactive";
 
 describe("reactive", () => {
   it("happy path", () => {
@@ -6,5 +6,12 @@ describe("reactive", () => {
     const obj = reactive(original);
     expect(obj).not.toBe(original);
     expect(obj.a).toBe(1);
+  });
+  it("isReactive", () => {
+    const o = {
+      age: 1,
+    };
+    const obj = reactive(o);
+    expect(isReactive(obj)).toBe(true);
   });
 });
