@@ -1,22 +1,8 @@
 import { activeEffect } from "./effect";
-
-export function reactive(raw) {
-  return new Proxy(raw, {
-    get(target, key) {
-      const res = Reflect.get(target, key);
-      trackEvent(target, key);
-      return res;
-    },
-    set(target, key, value) {
-      const res = Reflect.set(target, key, value);
-      triggerEvent(target, key);
-      return res;
-    },
-  });
-}
+import { mutableHandlers, readonlyHandlers } from "./baseHandles";
 
 const targetMap = new Map();
-function trackEvent(target, key) {
+export function trackEvent(target, key) {
   let depsMap = targetMap.get(target);
   if (!depsMap) {
     depsMap = new Map();
@@ -32,7 +18,7 @@ function trackEvent(target, key) {
     activeEffect.deps.add(dep); //stop功能,收集dep
   }
 }
-function triggerEvent(target, key) {
+export function triggerEvent(target, key) {
   const depsMap = targetMap.get(target);
   if (!depsMap) {
     return;
@@ -45,4 +31,16 @@ function triggerEvent(target, key) {
       effect.run();
     }
   });
+}
+
+export function reactive(raw) {
+  return createActiveObj(raw, mutableHandlers);
+}
+
+export function readonly(obj) {
+  return createActiveObj(obj, readonlyHandlers);
+}
+
+function createActiveObj(obj, type) {
+  return new Proxy(obj, type);
 }
