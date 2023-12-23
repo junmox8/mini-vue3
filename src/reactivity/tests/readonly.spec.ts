@@ -25,4 +25,17 @@ describe("readonly", () => {
     const obj = readonly(o);
     expect(isReadonly(obj)).toBe(true);
   });
+  it("嵌套readOnly", () => {
+    const obj = readonly({
+      a: 1,
+      b: [1, 2],
+      c: {
+        a: 1,
+        b: [1, 2],
+      },
+    });
+    expect(isReadonly(obj)).toBe(true);
+    expect(isReadonly(obj.c)).toBe(true);
+    expect(isReadonly(obj.c.b)).toBe(true);
+  });
 });

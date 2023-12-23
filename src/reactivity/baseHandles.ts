@@ -1,4 +1,5 @@
-import { trackEvent, triggerEvent } from "./reactive";
+import { reactive, readonly, trackEvent, triggerEvent } from "./reactive";
+import { isObject } from "./shared";
 
 function createGetter(isReadonly = false) {
   return function (target, key) {
@@ -8,9 +9,14 @@ function createGetter(isReadonly = false) {
       return isReadonly;
     }
     const res = Reflect.get(target, key);
+
     if (!isReadonly) {
       trackEvent(target, key);
     }
+    if (isObject(res)) {
+      return isReadonly ? readonly(res) : reactive(res);
+    }
+
     return res;
   };
 }
