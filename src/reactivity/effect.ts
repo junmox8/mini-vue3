@@ -1,14 +1,20 @@
 import { extend } from "./shared";
 export let activeEffect;
+export let shouldTrack;
 class ReactiveEffect {
   constructor(public fn, public schedule?) {}
   deps = new Set([]);
   active = true;
   onStop?: () => void;
   run() {
+    if (!this.active) {
+      return this.fn();
+    }
+    shouldTrack = true;
     activeEffect = this;
-    this.active = true;
-    return this.fn();
+    const res = this.fn();
+    shouldTrack = false;
+    return res;
   }
   stop() {
     this.cleanupEffect(this);

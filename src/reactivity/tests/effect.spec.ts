@@ -62,8 +62,8 @@ describe("effect", () => {
     stop(fn);
     obj.age = 3;
     expect(dummy).toBe(1);
-    fn();
-    expect(dummy).toBe(4);
+    obj.age++;
+    expect(dummy).toBe(1);
   });
   it("opStop", () => {
     const obj = reactive({

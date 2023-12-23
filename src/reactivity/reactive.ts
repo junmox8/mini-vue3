@@ -1,8 +1,11 @@
-import { activeEffect } from "./effect";
+import { activeEffect, shouldTrack } from "./effect";
 import { mutableHandlers, readonlyHandlers, reactiveFlag } from "./baseHandles";
 
 const targetMap = new Map();
 export function trackEvent(target, key) {
+  if (!isTracking()) {
+    return;
+  }
   let depsMap = targetMap.get(target);
   if (!depsMap) {
     depsMap = new Map();
@@ -13,10 +16,8 @@ export function trackEvent(target, key) {
     dep = new Set();
     depsMap.set(key, dep);
   }
-  if (activeEffect) {
-    dep.add(activeEffect);
-    activeEffect.deps.add(dep); //stop功能,收集dep
-  }
+  dep.add(activeEffect);
+  activeEffect.deps.add(dep); //stop功能,收集dep
 }
 export function triggerEvent(target, key) {
   const depsMap = targetMap.get(target);
@@ -31,6 +32,10 @@ export function triggerEvent(target, key) {
       effect.run();
     }
   });
+}
+
+function isTracking() {
+  return activeEffect && shouldTrack;
 }
 
 export function reactive(raw) {
