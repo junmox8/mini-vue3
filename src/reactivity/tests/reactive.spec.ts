@@ -14,17 +14,17 @@ describe("reactive", () => {
     const obj = reactive(o);
     expect(isReactive(obj)).toBe(true);
   });
-});
-it("嵌套reactive", () => {
-  const obj = reactive({
-    a: 1,
-    b: [1, 2],
-    c: {
+  it("嵌套reactive", () => {
+    const obj = reactive({
       a: 1,
       b: [1, 2],
-    },
+      c: {
+        a: 1,
+        b: [1, 2],
+      },
+    });
+    expect(isReactive(obj)).toBe(true);
+    expect(isReactive(obj.c)).toBe(true);
+    expect(isReactive(obj.c.b)).toBe(true);
   });
-  expect(isReactive(obj)).toBe(true);
-  expect(isReactive(obj.c)).toBe(true);
-  expect(isReactive(obj.c.b)).toBe(true);
 });
