@@ -1,4 +1,4 @@
-import { reactive, isReactive } from "../reactive";
+import { reactive, isReactive, isProxy } from "../reactive";
 
 describe("reactive", () => {
   it("happy path", () => {
@@ -6,6 +6,7 @@ describe("reactive", () => {
     const obj = reactive(original);
     expect(obj).not.toBe(original);
     expect(obj.a).toBe(1);
+    expect(isProxy(obj)).toBe(true);
   });
   it("isReactive", () => {
     const o = {
@@ -26,5 +27,9 @@ describe("reactive", () => {
     expect(isReactive(obj)).toBe(true);
     expect(isReactive(obj.c)).toBe(true);
     expect(isReactive(obj.c.b)).toBe(true);
+  });
+  it("isProxy", () => {
+    const obj = reactive({ a: 1 });
+    expect(isProxy(obj)).toBe(true);
   });
 });

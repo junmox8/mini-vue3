@@ -1,4 +1,4 @@
-import { readonly, isReadonly, shallowReadonly } from "../reactive";
+import { readonly, isReadonly, shallowReadonly, isProxy } from "../reactive";
 
 describe("readonly", () => {
   it("happy path", () => {
@@ -8,6 +8,7 @@ describe("readonly", () => {
     const obj = readonly(o);
     expect(obj.age).toBe(1);
     expect(obj).not.toBe(o);
+    expect(isProxy(obj)).toBe(true);
   });
   it("warning when set value", () => {
     console.warn = jest.fn();
@@ -42,5 +43,9 @@ describe("readonly", () => {
     const obj = shallowReadonly({ a: 1 });
     expect(isReadonly(obj)).toBe(true);
     expect(isReadonly(obj.a)).toBe(false);
+  });
+  it("isProxy", () => {
+    const obj = readonly({ a: 1 });
+    expect(isProxy(obj)).toBe(true);
   });
 });
