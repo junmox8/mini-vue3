@@ -1,4 +1,4 @@
-import { ref, isRef } from "../ref";
+import { ref, isRef, unRef } from "../ref";
 import { effect } from "../effect";
 import { reactive } from "../reactive";
 
@@ -41,6 +41,11 @@ describe("ref", () => {
     const b = reactive({ a: 1 });
     expect(isRef(a)).toBe(true);
     expect(isRef(b)).toBe(false);
-    expect(1).toBe(false);
+    expect(isRef(1)).toBe(false);
+  });
+  it("unRef", () => {
+    const a = ref(1);
+    expect(unRef(a)).toBe(1);
+    expect(unRef(1)).toBe(1);
   });
 });
