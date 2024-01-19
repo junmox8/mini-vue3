@@ -21,15 +21,24 @@ export function trackEvent(target, key) {
     dep = new Set();
     depsMap.set(key, dep);
   }
+  trackEffect(dep);
+}
+
+export function trackEffect(dep) {
   dep.add(activeEffect);
   activeEffect.deps.add(dep); //stop功能,收集dep
 }
+
 export function triggerEvent(target, key) {
   const depsMap = targetMap.get(target);
   if (!depsMap) {
     return;
   }
   const dep = depsMap.get(key);
+  triggerEffect(dep);
+}
+
+export function triggerEffect(dep) {
   Array.from(dep).forEach((effect) => {
     if (effect.schedule) {
       effect.schedule(); //schedule优先级大于run
@@ -39,7 +48,7 @@ export function triggerEvent(target, key) {
   });
 }
 
-function isTracking() {
+export function isTracking() {
   return activeEffect && shouldTrack;
 }
 
