@@ -1,7 +1,7 @@
 import { extend } from "./shared";
 export let activeEffect;
 export let shouldTrack;
-class ReactiveEffect {
+export default class ReactiveEffect {
   constructor(public fn, public schedule?) {}
   deps = new Set([]);
   active = true;
