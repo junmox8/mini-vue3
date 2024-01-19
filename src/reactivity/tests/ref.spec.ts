@@ -1,5 +1,6 @@
-import { ref } from "../ref";
+import { ref, isRef } from "../ref";
 import { effect } from "../effect";
+import { reactive } from "../reactive";
 
 describe("ref", () => {
   it("happy path", () => {
@@ -23,7 +24,7 @@ describe("ref", () => {
     expect(callNum).toBe(2);
     expect(dummy).toBe(2);
   });
-  it("should make nested properties reactive", () => {
+  it("ref传值为对象", () => {
     const a = ref({
       count: 1,
     });
@@ -34,5 +35,12 @@ describe("ref", () => {
     expect(dummy).toBe(1);
     a.value.count = 2;
     expect(dummy).toBe(2);
+  });
+  it("isRef", () => {
+    const a = ref(1);
+    const b = reactive({ a: 1 });
+    expect(isRef(a)).toBe(true);
+    expect(isRef(b)).toBe(false);
+    expect(1).toBe(false);
   });
 });

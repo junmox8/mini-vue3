@@ -3,7 +3,8 @@ import { isSame, isObject } from "./shared";
 
 class RefImpl {
   private _value;
-  private _rawValue;
+  private _rawValue; //原始值
+  public __v_isRef = true;
   public dep;
   constructor(value) {
     this.dep = new Set();
@@ -34,4 +35,8 @@ function trackRefValue(ref) {
 
 function convert(value) {
   return isObject(value) ? reactive(value) : value;
+}
+
+export function isRef(ref) {
+  return !!ref.__v_isRef;
 }
