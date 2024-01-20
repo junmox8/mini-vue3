@@ -1,5 +1,5 @@
 import { reactive, readonly, trackEvent, triggerEvent } from "./reactive";
-import { isObject, extend } from "./shared";
+import { isObject, extend } from "../shared";
 
 function createGetter(isReadonly = false, isShallow = false) {
   return function (target, key) {

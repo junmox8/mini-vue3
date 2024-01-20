@@ -1,5 +1,5 @@
 import { trackEffect, triggerEffect, isTracking, reactive } from "./reactive";
-import { isSame, isObject } from "./shared";
+import { isSame, isObject } from "../shared";
 
 class RefImpl {
   private _value;
