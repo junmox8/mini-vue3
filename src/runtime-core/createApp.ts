@@ -1,6 +1,6 @@
 import { createVNode } from "./vnode";
 import { render } from "./render";
-function createApp(rootComponent) {
+export function createApp(rootComponent) {
   return {
     mount: function (rootContainer) {
       //后续操作都是基于vnode进行处理

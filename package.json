@@ -2,15 +2,20 @@
   "name": "writing-vue3",
   "packageManager": "yarn@3.6.4",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "build": "rollup -c rollup.config.mjs"
   },
   "devDependencies": {
     "@babel/core": "^7.23.6",
     "@babel/preset-env": "^7.23.6",
     "@babel/preset-typescript": "^7.23.3",
+    "@rollup/plugin-typescript": "^11.1.6",
     "@types/jest": "^29.5.11",
     "babel-jest": "^29.7.0",
     "jest": "^29.7.0",
+    "rollup": "^4.9.5",
+    "tslib": "^2.6.2",
     "typescript": "^5.3.3"
-  }
+  },
+  "dependencies": {}
 }
