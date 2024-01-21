@@ -22,7 +22,7 @@ function processComponent(vnode, container) {
 
 function mountElement(vnode, container) {
   const { type, props, children } = vnode;
-  const el = document.createElement(type);
+  const el = (vnode.el = document.createElement(type)); //进行vnode的el赋值
   if (props) {
     for (let key in props) {
       el.setAttribute(key, props[key]);
@@ -43,10 +43,12 @@ function mountChildren(children, container) {
 function mountComponent(vnode, container) {
   const instance = createComponentInstance(vnode);
   setupComponent(instance);
-  setupRenderEffect(instance, container);
+  setupRenderEffect(instance, vnode, container);
 }
 
-function setupRenderEffect(instance, container) {
-  const subTree = instance.render();
+function setupRenderEffect(instance, vnode, container) {
+  const { proxy } = instance;
+  const subTree = instance.render.call(proxy);
   patch(subTree, container);
+  vnode.el = subTree.el;
 }

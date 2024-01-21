@@ -1,3 +1,5 @@
+import { PublicInstanceProxyHandler } from "./componentPublicInstance";
+
 export function createComponentInstance(vnode) {
   const component = {
     vnode,
@@ -14,6 +16,9 @@ export function setupComponent(instance) {
 function setupStatefulComponent(instance) {
   const Component = instance.type; //组件实例内部包含vnode
   const { setup } = Component;
+
+  instance.proxy = new Proxy({ _: instance }, PublicInstanceProxyHandler);
+
   if (setup) {
     //可能是object/function类型
     const setupResult = setup();
