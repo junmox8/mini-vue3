@@ -5,8 +5,12 @@ const publicPropertiesMap = {
 
 export const PublicInstanceProxyHandler = {
   get({ _: instance }, key) {
-    if (key in instance.setupState) {
-      return instance.setupState[key];
+    const { setupState, props } = instance;
+    if (key in setupState) {
+      return setupState[key];
+    }
+    if (key in props) {
+      return props[key];
     }
     const PublicGetter = publicPropertiesMap[key];
     if (PublicGetter) {

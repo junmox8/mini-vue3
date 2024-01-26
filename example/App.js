@@ -1,9 +1,9 @@
 import {h} from '../lib/mini-vue.esm.js'
-
+import {Foo} from './Foo.js'
 const App = {
   render() {
     window.self = this
-    return h("div", [h("span", "child1" + this.msg, {class: 'blue', onClick: function () {console.log(1)}})], {class: 'red'})
+    return h("div", [h("span", "child1" + this.msg, {class: 'blue', onClick: function () {console.log(1)}}), h(Foo, [], {count: 1})], {class: 'red'})
   },
   setup() {
     return {

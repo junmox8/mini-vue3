@@ -5,6 +5,7 @@ import {
   shallowReadonlyHandlers,
   reactiveFlag,
 } from "./baseHandles";
+import { isObject } from "../shared/index";
 
 const targetMap = new Map();
 export function trackEvent(target, key) {
@@ -75,5 +76,9 @@ export function isProxy(obj) {
 }
 
 export function shallowReadonly(obj) {
+  if (!isObject(obj)) {
+    console.warn(`${obj}需要是对象`);
+    return obj;
+  }
   return createActiveObj(obj, shallowReadonlyHandlers);
 }
