@@ -1,4 +1,4 @@
-import {h} from '../lib/mini-vue.esm.js'
+import {h} from '../../lib/mini-vue.esm.js'
 import {Foo} from './Foo.js'
 const App = {
   render() {
