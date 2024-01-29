@@ -23,6 +23,10 @@ export function createVNode(type, children?, props?) {
   return vnode;
 }
 
+export function createTextVnode(text) {
+  return createVNode("Text", text, {});
+}
+
 function getShapeFlag(type) {
   return typeof type === "string"
     ? ShapeFlags.ELEMENT

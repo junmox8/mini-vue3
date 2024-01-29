@@ -5,12 +5,33 @@ export function render(vnode, container) {
 }
 
 function patch(vnode, container) {
-  const { shapeFlag } = vnode;
-  if (shapeFlag & ShapeFlags.ELEMENT) {
-    processElement(vnode, container);
-  } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
-    processComponent(vnode, container);
+  const { type, shapeFlag } = vnode;
+  switch (type) {
+    case "Fragment":
+      processFragment(vnode, container);
+      break;
+    case "Text":
+      processText(vnode, container);
+      break;
+    default:
+      if (shapeFlag & ShapeFlags.ELEMENT) {
+        processElement(vnode, container);
+      } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
+        processComponent(vnode, container);
+      }
+      break;
   }
+}
+
+function processFragment(vnode, container) {
+  //跳过生成父节点
+  mountChildren(vnode.children, container);
+}
+
+function processText(vnode, container) {
+  const { children } = vnode;
+  const node = (vnode.el = document.createTextNode(children));
+  container.append(node);
 }
 
 function processElement(vnode, container) {
