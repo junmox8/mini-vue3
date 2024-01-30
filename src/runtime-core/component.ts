@@ -3,6 +3,7 @@ import { initProps } from "./componentProps";
 import { shallowReadonly } from "../reactivity/reactive";
 import { emit } from "./componentEmit";
 import { initSlot } from "./componentSlots";
+import { proxyRef } from "../reactivity";
 
 export function createComponentInstance(vnode, parent) {
   console.log("parent", parent);
@@ -14,6 +15,7 @@ export function createComponentInstance(vnode, parent) {
     slots: {},
     provides: parent ? parent.provides : {},
     parent,
+    isMounted: false, //代表该组件实例是否初始化
     emit: () => {},
   };
   component.emit = emit.bind(null, component) as any;
@@ -47,7 +49,7 @@ function setupStatefulComponent(instance) {
 function handleSetupResult(instance, setupResult) {
   //TODO function类型
   if (typeof setupResult === "object") {
-    instance.setupState = setupResult;
+    instance.setupState = proxyRef(setupResult);
   }
   finishComponentSetup(instance);
 }
