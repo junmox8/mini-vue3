@@ -6,7 +6,6 @@ import { initSlot } from "./componentSlots";
 import { proxyRef } from "../reactivity";
 
 export function createComponentInstance(vnode, parent) {
-  console.log("parent", parent);
   const component = {
     vnode,
     type: vnode.type,
@@ -16,6 +15,7 @@ export function createComponentInstance(vnode, parent) {
     provides: parent ? parent.provides : {},
     parent,
     isMounted: false, //代表该组件实例是否初始化
+    subTree: {},
     emit: () => {},
   };
   component.emit = emit.bind(null, component) as any;

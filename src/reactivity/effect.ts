@@ -29,7 +29,7 @@ export default class ReactiveEffect {
       this.active = false;
     }
   }
-}
+}  
 
 export function effect(fn, option: any = {}) {
   const { schedule = null, onStop = null } = option;
