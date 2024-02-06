@@ -4,16 +4,18 @@ function createElement(type) {
   return document.createElement(type);
 }
 
-function patchProps(props, el) {
+function patchProp(el, key, oldProp, newProp) {
   function isOn(key) {
     //鉴别该属性是否是事件
     return /^on[A-Z]/.test(key);
   }
-  for (let key in props) {
-    if (isOn(key)) {
-      el.addEventListener(key.slice(2).toLowerCase(), props[key]);
+  if (isOn(key)) {
+    el.addEventListener(key.slice(2).toLowerCase(), newProp);
+  } else {
+    if (newProp === undefined || newProp === null) {
+      el.removeAttribute(key);
     } else {
-      el.setAttribute(key, props[key]);
+      el.setAttribute(key, newProp);
     }
   }
 }
@@ -24,7 +26,7 @@ function insert(el, parent) {
 
 const renderer: any = createRenderer({
   createElement,
-  patchProps,
+  patchProp,
   insert,
 });
 

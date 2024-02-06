@@ -4,7 +4,7 @@ import { ShapeFlags } from "./ShapeFlags";
 import { effect } from "../reactivity/effect";
 
 export function createRenderer(options) {
-  const { createElement, patchProps, insert } = options;
+  const { createElement, patchProp, insert } = options;
 
   function render(n2, container, parentComponent) {
     //只有在createApp().mount函数中执行render 因此一定是初始化
@@ -58,7 +58,10 @@ export function createRenderer(options) {
     const { type, props, children, shapeFlag } = vnode;
     const el = (vnode.el = createElement(type)); //进行vnode的el赋值
     if (props) {
-      patchProps(props, el);
+      for (let key in props) {
+        const val = props[key];
+        patchProp(el, key, null, val);
+      }
     }
     if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
       el.textContent = children;
@@ -69,7 +72,25 @@ export function createRenderer(options) {
   }
 
   function patchElement(n1, n2, container) {
-    console.log(n2);
+    const oldProps = n1.props || {};
+    const newProps = n2.props || {};
+    const el = (n2.el = n1.el); //n1在mountElement时赋值el给vnode n2未走mount逻辑 故在此赋值el给n2
+    patchProps(el, oldProps, newProps);
+  }
+
+  function patchProps(el, oldProps, newProps) {
+    for (let key in newProps) {
+      const oldProp = oldProps[key];
+      const newProp = newProps[key];
+      if (oldProp !== newProp) {
+        patchProp(el, key, oldProp, newProp);
+      }
+    }
+    for (let key in oldProps) {
+      if (!(key in newProps)) {
+        patchProp(el, key, oldProps[key], null);
+      }
+    }
   }
 
   function mountChildren(children, container, parentComponent) {
