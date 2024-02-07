@@ -4,7 +4,7 @@ import { ShapeFlags } from "./ShapeFlags";
 import { effect } from "../reactivity/effect";
 
 export function createRenderer(options) {
-  const { createElement, patchProp, insert } = options;
+  const { createElement, patchProp, insert, remove, setElementText } = options;
 
   function render(n2, container, parentComponent) {
     //只有在createApp().mount函数中执行render 因此一定是初始化
@@ -46,7 +46,7 @@ export function createRenderer(options) {
       //初始化逻辑
       mountElement(n2, container, parentComponent);
     } else {
-      patchElement(n1, n2, container);
+      patchElement(n1, n2, container, parentComponent);
     }
   }
 
@@ -71,11 +71,44 @@ export function createRenderer(options) {
     insert(el, container);
   }
 
-  function patchElement(n1, n2, container) {
+  function patchElement(n1, n2, container, parentComponent) {
     const oldProps = n1.props || {};
     const newProps = n2.props || {};
     const el = (n2.el = n1.el); //n1在mountElement时赋值el给vnode n2未走mount逻辑 故在此赋值el给n2
+
+    patchChildren(el, n1, n2, parentComponent);
     patchProps(el, oldProps, newProps);
+  }
+
+  function patchChildren(el, n1, n2, parentComponent) {
+    const prevShapeFlag = n1.shapeFlag;
+    const shapeFlag = n2.shapeFlag;
+    const oldChildren = n1.children;
+    const newChildren = n2.children;
+    if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
+      //ArrayToText情况 1.把老的children清空 2.设置新的text
+      //TextToText情况 1.设置新的text
+      if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+        unmountChildren(n1.children);
+      }
+      if (oldChildren !== newChildren) {
+        setElementText(el, newChildren);
+      }
+    } else {
+      //TextToArray情况 1.清空children
+      if (prevShapeFlag & ShapeFlags.TEXT_CHILDREN) {
+        setElementText(el, "");
+        mountChildren(newChildren, el, parentComponent);
+      } else {
+      }
+    }
+  }
+
+  function unmountChildren(children) {
+    for (let i = 0; i <= children.length - 1; i++) {
+      const el = children[i].el;
+      remove(el);
+    }
   }
 
   function patchProps(el, oldProps, newProps) {
