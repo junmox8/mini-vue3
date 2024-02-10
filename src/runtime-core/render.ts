@@ -8,31 +8,31 @@ export function createRenderer(options) {
 
   function render(n2, container, parentComponent) {
     //只有在createApp().mount函数中执行render 因此一定是初始化
-    patch(null, n2, container, parentComponent);
+    patch(null, n2, container, parentComponent, null);
   }
 
-  function patch(n1, n2, container, parentComponent) {
+  function patch(n1, n2, container, parentComponent, anchor = null) {
     const { type, shapeFlag } = n2;
     switch (type) {
       case "Fragment":
-        processFragment(n1, n2, container, parentComponent);
+        processFragment(n1, n2, container, parentComponent, anchor);
         break;
       case "Text":
         processText(n1, n2, container);
         break;
       default:
         if (shapeFlag & ShapeFlags.ELEMENT) {
-          processElement(n1, n2, container, parentComponent);
+          processElement(n1, n2, container, parentComponent, anchor);
         } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
-          processComponent(n1, n2, container, parentComponent);
+          processComponent(n1, n2, container, parentComponent, anchor);
         }
         break;
     }
   }
 
-  function processFragment(n1, n2, container, parentComponent) {
+  function processFragment(n1, n2, container, parentComponent, anchor) {
     //跳过生成父节点
-    mountChildren(n2.children, container, parentComponent);
+    mountChildren(n2.children, container, parentComponent, anchor);
   }
 
   function processText(n1, n2, container) {
@@ -41,20 +41,20 @@ export function createRenderer(options) {
     container.append(node);
   }
 
-  function processElement(n1, n2, container, parentComponent) {
+  function processElement(n1, n2, container, parentComponent, anchor) {
     if (!n1) {
       //初始化逻辑
-      mountElement(n2, container, parentComponent);
+      mountElement(n2, container, parentComponent, anchor);
     } else {
-      patchElement(n1, n2, container, parentComponent);
+      patchElement(n1, n2, container, parentComponent, anchor);
     }
   }
 
-  function processComponent(n1, n2, container, parentComponent) {
-    mountComponent(n2, container, parentComponent);
+  function processComponent(n1, n2, container, parentComponent, anchor) {
+    mountComponent(n2, container, parentComponent, anchor);
   }
 
-  function mountElement(vnode, container, parentComponent) {
+  function mountElement(vnode, container, parentComponent, anchor) {
     const { type, props, children, shapeFlag } = vnode;
     const el = (vnode.el = createElement(type)); //进行vnode的el赋值
     if (props) {
@@ -66,21 +66,21 @@ export function createRenderer(options) {
     if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
       el.textContent = children;
     } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-      mountChildren(children, el, parentComponent);
+      mountChildren(children, el, parentComponent, anchor);
     }
-    insert(el, container);
+    insert(el, container, anchor);
   }
 
-  function patchElement(n1, n2, container, parentComponent) {
+  function patchElement(n1, n2, container, parentComponent, anchor) {
     const oldProps = n1.props || {};
     const newProps = n2.props || {};
     const el = (n2.el = n1.el); //n1在mountElement时赋值el给vnode n2未走mount逻辑 故在此赋值el给n2
 
-    patchChildren(el, n1, n2, parentComponent);
+    patchChildren(el, n1, n2, parentComponent, anchor);
     patchProps(el, oldProps, newProps);
   }
 
-  function patchChildren(el, n1, n2, parentComponent) {
+  function patchChildren(el, n1, n2, parentComponent, anchor) {
     const prevShapeFlag = n1.shapeFlag;
     const shapeFlag = n2.shapeFlag;
     const oldChildren = n1.children;
@@ -98,8 +98,131 @@ export function createRenderer(options) {
       //TextToArray情况 1.清空children
       if (prevShapeFlag & ShapeFlags.TEXT_CHILDREN) {
         setElementText(el, "");
-        mountChildren(newChildren, el, parentComponent);
+        mountChildren(newChildren, el, parentComponent, anchor);
       } else {
+        //ArrayToArray情况
+        patchKeyedChildren(oldChildren, newChildren, el, parentComponent, anchor);
+      }
+    }
+  }
+
+  function patchKeyedChildren(oldChildren, newChildren, container, parentComponent, parentAnchor) {
+    let e1 = oldChildren.length - 1;
+    let e2 = newChildren.length - 1;
+    let i = 0;
+    function isSomeVnodeType(n1, n2) {
+      //从type和key两个角度比较
+      //key为什么没有从props中取 因为在创建vnode的时候已经从props中取值并赋值给vnode的key属性了
+      return n1.type === n2.type && n1.key === n2.key;
+    }
+    //左侧
+    while (i <= e1 && i <= e2) {
+      const n1 = oldChildren[i];
+      const n2 = newChildren[i];
+      if (isSomeVnodeType(n1, n2)) {
+        //如果相同 直接走patch逻辑 更新两个vnode的props和children
+        patch(n1, n2, container, parentComponent, parentAnchor);
+      } else {
+        break;
+      }
+      i++;
+    }
+    //右侧
+    while (i <= e1 && i <= e2) {
+      const n1 = oldChildren[e1];
+      const n2 = newChildren[e2];
+      if (isSomeVnodeType(n1, n2)) {
+        //如果相同 直接走patch逻辑 更新两个vnode的props和children
+        patch(n1, n2, container, parentComponent, parentAnchor);
+      } else {
+        break;
+      }
+      e1--;
+      e2--;
+    }
+    if (i > e1) {
+      //新的比老的多 创建
+      if (i <= e2) {
+        const nextPos = e2 + 1;
+        const anchor = nextPos < newChildren.length ? newChildren[nextPos].el : null;
+        while (i <= e2) {
+          patch(null, newChildren[i], container, parentComponent, anchor);
+          i++;
+        }
+      }
+    } else if (i > e2) {
+      //老的比新的多 删除
+      while (i <= e1) {
+        remove(oldChildren[i].el);
+        i++;
+      }
+    } else {
+      //中间比对
+      let s1 = i,
+        s2 = i;
+      //这里是优化点 若newChildren里所有项都patch后 oldChildren多余的项直接remove即可
+      const toBePatched = e2 - s2 + 1;
+      let patched = 0;
+      const keyToNewIndexMap = new Map();
+      const newIndexToOldIndexMap = new Array(toBePatched).fill(0);
+      let moved = false;
+      let maxNewIndexSoFar = 0;
+
+      for (let i = s2; i <= e2; i++) {
+        const el = newChildren[i];
+        //key为vnode的key value为索引
+        keyToNewIndexMap.set(el.key, i);
+      }
+      for (let i = s1; i <= e1; i++) {
+        const el = oldChildren[i];
+        let newIndex;
+        if (patched >= toBePatched) {
+          remove(el.el);
+          continue;
+        }
+        if (el.key) {
+          newIndex = keyToNewIndexMap.get(el.key);
+        } else {
+          //如果没有设置key oldChildren的每一项和newChildren中的元素进行比对
+          for (let j = s2; j <= e2; j++) {
+            if (isSomeVnodeType(el, newChildren[j])) {
+              newIndex = j;
+              break;
+            }
+          }
+        }
+
+        if (!newIndex) {
+          remove(el.el);
+        } else {
+          if (newIndex >= maxNewIndexSoFar) {
+            maxNewIndexSoFar = newIndex;
+          } else {
+            moved = true;
+          }
+          newIndexToOldIndexMap[newIndex - s2] = i + 1;
+          patch(el, newChildren[newIndex], container, parentComponent);
+          patched++;
+        }
+      }
+
+      //获取最长递增子序列
+      const increasingNewIndexSequence = moved ? getSequence(newIndexToOldIndexMap) : [];
+      let j = increasingNewIndexSequence.length - 1;
+      for (let i = toBePatched - 1; i >= 0; i--) {
+        const nextIndex = s2 + i;
+        const nextChild = newChildren[nextIndex];
+        const anchor = nextIndex + 1 < newChildren.length ? newChildren[nextIndex + 1].el : null;
+        if (newIndexToOldIndexMap[i] === 0) {
+          patch(null, nextChild, container, parentComponent, anchor);
+        }
+        if (moved) {
+          if (j < 0 || i !== increasingNewIndexSequence[j]) {
+            insert(nextChild.el, container, anchor);
+          } else {
+            j--;
+          }
+        }
       }
     }
   }
@@ -126,24 +249,24 @@ export function createRenderer(options) {
     }
   }
 
-  function mountChildren(children, container, parentComponent) {
-    children.forEach((child) => patch(null, child, container, parentComponent));
+  function mountChildren(children, container, parentComponent, anchor) {
+    children.forEach((child) => patch(null, child, container, parentComponent, anchor));
   }
 
-  function mountComponent(vnode, container, parentComponent) {
+  function mountComponent(vnode, container, parentComponent, anchor) {
     const instance = createComponentInstance(vnode, parentComponent);
     setupComponent(instance);
-    setupRenderEffect(instance, vnode, container);
+    setupRenderEffect(instance, vnode, container, anchor);
   }
 
-  function setupRenderEffect(instance, vnode, container) {
+  function setupRenderEffect(instance, vnode, container, anchor) {
     effect(() => {
       if (!instance.isMounted) {
         //如果是初始化时，走此逻辑创建节点
         const { proxy } = instance;
         //在这里将初始化的子节点放到subTree中。
         const subTree = (instance.subTree = instance.render.call(proxy));
-        patch(null, subTree, container, instance);
+        patch(null, subTree, container, instance, anchor);
         vnode.el = subTree.el;
 
         instance.isMounted = true;
@@ -156,7 +279,7 @@ export function createRenderer(options) {
         //再次更新子节点
         instance.subTree = subTree;
 
-        patch(prevSubTree, subTree, container, instance);
+        patch(prevSubTree, subTree, container, instance, anchor);
       }
     });
   }
@@ -164,4 +287,48 @@ export function createRenderer(options) {
   return {
     createApp: createAppAPI(render),
   };
+}
+
+//求最长递增子序列函数
+function getSequence(arr: number[]): number[] {
+  const predecessors = arr.slice();
+  const sequenceIndices = [0];
+  let currentIndex, lastIndexOfSequence, low, high, mid, comparisonResult;
+  const length = arr.length;
+  for (currentIndex = 0; currentIndex < length; currentIndex++) {
+    const currentElement = arr[currentIndex];
+    if (currentElement !== 0) {
+      lastIndexOfSequence = sequenceIndices[sequenceIndices.length - 1];
+      if (arr[lastIndexOfSequence] < currentElement) {
+        predecessors[currentIndex] = lastIndexOfSequence;
+        sequenceIndices.push(currentIndex);
+        continue;
+      }
+      low = 0;
+      high = sequenceIndices.length - 1;
+      while (low < high) {
+        mid = (low + high) >> 1;
+        comparisonResult = arr[sequenceIndices[mid]] < currentElement ? 1 : 0;
+        if (comparisonResult) {
+          low = mid + 1;
+        } else {
+          high = mid;
+        }
+      }
+      if (currentElement < arr[sequenceIndices[low]]) {
+        if (low > 0) {
+          predecessors[currentIndex] = sequenceIndices[low - 1];
+        }
+        sequenceIndices[low] = currentIndex;
+      }
+    }
+  }
+  currentIndex = sequenceIndices.length;
+  lastIndexOfSequence = sequenceIndices[currentIndex - 1];
+  while (currentIndex-- > 0) {
+    sequenceIndices[currentIndex] = lastIndexOfSequence;
+    lastIndexOfSequence = predecessors[lastIndexOfSequence];
+  }
+
+  return sequenceIndices;
 }

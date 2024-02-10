@@ -7,6 +7,7 @@ export function createVNode(type, children?, props?) {
     children,
     el: null, //方便后续$el取值
     shapeFlag: getShapeFlag(type),
+    key: props?.key, //方便后续patch比较
   };
   if (typeof children === "string") {
     vnode.shapeFlag |= ShapeFlags.TEXT_CHILDREN;
@@ -28,7 +29,5 @@ export function createTextVnode(text) {
 }
 
 function getShapeFlag(type) {
-  return typeof type === "string"
-    ? ShapeFlags.ELEMENT
-    : ShapeFlags.STATEFUL_COMPONENT;
+  return typeof type === "string" ? ShapeFlags.ELEMENT : ShapeFlags.STATEFUL_COMPONENT;
 }
