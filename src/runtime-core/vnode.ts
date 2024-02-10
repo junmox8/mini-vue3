@@ -8,6 +8,7 @@ export function createVNode(type, children?, props?) {
     el: null, //方便后续$el取值
     shapeFlag: getShapeFlag(type),
     key: props?.key, //方便后续patch比较
+    component: null, //vnode对应的组件实例
   };
   if (typeof children === "string") {
     vnode.shapeFlag |= ShapeFlags.TEXT_CHILDREN;

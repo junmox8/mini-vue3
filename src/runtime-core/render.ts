@@ -51,7 +51,33 @@ export function createRenderer(options) {
   }
 
   function processComponent(n1, n2, container, parentComponent, anchor) {
-    mountComponent(n2, container, parentComponent, anchor);
+    if (!n1) {
+      mountComponent(n2, container, parentComponent, anchor);
+    } else {
+      updateComponent(n1, n2);
+    }
+  }
+
+  function updateComponent(n1, n2) {
+    const instance = (n2.component = n1.component);
+    if (shouldUpdate(n1, n2)) {
+      instance.next = n2;
+      instance.update();
+    } else {
+      n2.el = n1.el;
+      instance.vnode = n2;
+    }
+  }
+
+  function shouldUpdate(n1, n2) {
+    const { props: prevProps } = n1;
+    const { props: nextProps } = n2;
+    for (let i in prevProps) {
+      if (prevProps[i] !== nextProps[i]) {
+        return true;
+      }
+    }
+    return false;
   }
 
   function mountElement(vnode, container, parentComponent, anchor) {
@@ -254,13 +280,13 @@ export function createRenderer(options) {
   }
 
   function mountComponent(vnode, container, parentComponent, anchor) {
-    const instance = createComponentInstance(vnode, parentComponent);
+    const instance = (vnode.component = createComponentInstance(vnode, parentComponent));
     setupComponent(instance);
     setupRenderEffect(instance, vnode, container, anchor);
   }
 
   function setupRenderEffect(instance, vnode, container, anchor) {
-    effect(() => {
+    instance.update = effect(() => {
       if (!instance.isMounted) {
         //如果是初始化时，走此逻辑创建节点
         const { proxy } = instance;
@@ -271,7 +297,12 @@ export function createRenderer(options) {
 
         instance.isMounted = true;
       } else {
-        const { proxy } = instance;
+        //next是即将要更新的vnode vnode是更新之前的vnode
+        const { proxy, next, vnode } = instance;
+        if (next) {
+          next.el = vnode.el;
+          updateComponentPreRender(instance, next);
+        }
         //新节点
         const subTree = instance.render.call(proxy);
         const prevSubTree = instance.subTree;
@@ -282,6 +313,12 @@ export function createRenderer(options) {
         patch(prevSubTree, subTree, container, instance, anchor);
       }
     });
+  }
+
+  function updateComponentPreRender(instance, nextVnode) {
+    instance.vnode = nextVnode;
+    instance.next = null;
+    instance.props = nextVnode.props;
   }
 
   return {

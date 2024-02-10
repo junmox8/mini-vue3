@@ -17,6 +17,7 @@ export function createComponentInstance(vnode, parent) {
     isMounted: false, //代表该组件实例是否初始化
     subTree: {},
     emit: () => {},
+    next: null,
   };
   component.emit = emit.bind(null, component) as any;
   return component;
