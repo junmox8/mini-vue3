@@ -4,3 +4,4 @@ export { createTextVnode } from "./vnode";
 export { getCurrentInstance } from "./component";
 export { provide, inject } from "./apiinject";
 export { createRenderer } from "./render";
+export { nextTick } from "./scheduler";
