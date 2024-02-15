@@ -6,33 +6,59 @@ const enum TagType {
 }
 export function baseParse(content: string) {
   const context = createParserContext(content);
-  return createRoot(parseChildren(context));
+  return createRoot(parseChildren(context, []));
 }
 
-function parseChildren(context) {
+function parseChildren(context, ancestors) {
   const nodes: any = [];
-  const str = context.source;
-  let node;
-  if (str.startsWith("{{")) {
-    //{{message}}
-    node = parseInterpolation(context);
-  } else if (str.startsWith("<")) {
-    //<div></div>
-    const regExp = new RegExp(/[a-z]/i);
-    if (regExp.test(str[1])) {
-      node = parseElement(context);
+  //循环进行parse
+  while (!isEnd(context, ancestors)) {
+    const str = context.source;
+    let node;
+    if (str.startsWith("{{")) {
+      //{{message}}
+      node = parseInterpolation(context);
+    } else if (str.startsWith("<")) {
+      //<div></div>
+      const regExp = new RegExp(/[a-z]/i);
+      if (regExp.test(str[1])) {
+        node = parseElement(context, ancestors);
+      }
+    } else {
+      //some text
+      node = parseText(context);
     }
-  } else {
-    //some text
-    node = parseText(context);
+    nodes.push(node);
   }
-  nodes.push(node);
-
   return nodes;
 }
 
+function isEnd(context, ancestors) {
+  //source无值|遇到结束标签
+  const str = context.source;
+  if (str.startsWith("</")) {
+    for (let i = ancestors.length - 1; i >= 0; i--) {
+      const tag = ancestors[i].tag;
+      if (startsWithEndTagOpen(context, tag)) {
+        return true;
+      }
+    }
+  }
+  return !str;
+}
+
 function parseText(context) {
-  const content = parseTextData(context, context.source.length);
+  const str = context.source;
+  let endIndex = str.length;
+  const endTokens = ["{{", "<"];
+
+  endTokens.forEach((item, ind) => {
+    const index = str.indexOf(endTokens[ind]);
+    if (index !== -1 && index < endIndex) {
+      endIndex = index;
+    }
+  });
+  const content = parseTextData(context, endIndex);
   return {
     type: NodeTypes.TEXT,
     content,
@@ -45,11 +71,27 @@ function parseTextData(context, length) {
   return content;
 }
 
-function parseElement(context) {
-  const element = parseTag(context, TagType.Start);
+function parseElement(context, ancestors) {
+  const element: any = parseTag(context, TagType.Start);
+  //收集ancestor 如<div><span></span></div> div span分别入栈
+  ancestors.push(element);
+  element.children = parseChildren(context, ancestors);
+  ancestors.pop();
   //处理</div>部分
-  parseTag(context, TagType.End);
+  //消除结束标签之前 先鉴定开始，结束标签的tag是否相同
+  if (startsWithEndTagOpen(context, element.tag)) {
+    parseTag(context, TagType.End);
+  } else {
+    throw new Error(`缺少结束标签:${element.tag}`);
+  }
   return element;
+}
+
+function startsWithEndTagOpen(context, tag) {
+  return (
+    context.source.startsWith("</") &&
+    context.source.slice(2, 2 + tag.length).toLowerCase() === tag.toLowerCase()
+  );
 }
 
 function parseTag(context, tagType) {
