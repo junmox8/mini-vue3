@@ -4,13 +4,14 @@ import { NodeTypes } from "./ast";
  * @Author: root 931097192@qq.com
  * @Date: 2024-02-16 16:29:09
  * @LastEditors: root 931097192@qq.com
- * @LastEditTime: 2024-02-17 14:34:38
+ * @LastEditTime: 2024-02-17 16:51:42
  * @FilePath: \writing-vue3\src\compiler-core\transform.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
-export function transform(root, options) {
+export function transform(root, options = {}) {
   const context = createTransformsContext(root, options);
   traverseNode(root, context);
+  createRootCodegen(root);
 }
 
 function traverseNode(node, context) {
@@ -40,4 +41,8 @@ function createTransformsContext(root, options) {
     nodeTransforms: options.nodeTransforms || [],
   };
   return context;
+}
+
+function createRootCodegen(root) {
+  root.codegenNode = root.children[0];
 }
