@@ -1,17 +1,11 @@
 import { NodeTypes } from "./ast";
+import { TO_DISPLAY_STRING } from "./runtimeHelpers";
 
-/*
- * @Author: root 931097192@qq.com
- * @Date: 2024-02-16 16:29:09
- * @LastEditors: root 931097192@qq.com
- * @LastEditTime: 2024-02-17 16:51:42
- * @FilePath: \writing-vue3\src\compiler-core\transform.ts
- * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
- */
 export function transform(root, options = {}) {
   const context = createTransformsContext(root, options);
   traverseNode(root, context);
   createRootCodegen(root);
+  root.helpers = [...context.helpers.keys()];
 }
 
 function traverseNode(node, context) {
@@ -20,18 +14,25 @@ function traverseNode(node, context) {
     const nodeTransform = nodeTransforms[i];
     nodeTransform(node);
   }
-  traversChildren(node, context);
+  switch (node.type) {
+    case NodeTypes.INTERPOLATION:
+      context.helper(TO_DISPLAY_STRING);
+      break;
+    case NodeTypes.ROOT:
+    case NodeTypes.ELEMENT:
+      //有children属性再进行递归
+      traverseChildren(node, context);
+      break;
+  }
 }
 
-function traversChildren(node, context) {
+function traverseChildren(node, context) {
   const children = node.children;
 
-  if (children) {
-    for (let i = 0; i <= children.length - 1; i++) {
-      const node = children[i];
+  for (let i = 0; i <= children.length - 1; i++) {
+    const node = children[i];
 
-      traverseNode(node, context);
-    }
+    traverseNode(node, context);
   }
 }
 
@@ -39,6 +40,10 @@ function createTransformsContext(root, options) {
   const context = {
     root,
     nodeTransforms: options.nodeTransforms || [],
+    helpers: new Map(),
+    helper: function (key) {
+      context.helpers.set(key, 1);
+    },
   };
   return context;
 }
