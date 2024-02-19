@@ -56,13 +56,10 @@ function genCompoundExpression(node, context) {
 }
 
 function genElement(node, context) {
-  const { tag, children } = node;
+  const { tag, children, props } = node;
   const { push, helper } = context;
-  push(`${helper(CREATE_ELEMENT_VNODE)}("${tag}", null, `);
-  for (let i = 0; i <= children.length - 1; i++) {
-    const node = children[i];
-    genNode(node, context);
-  }
+  push(`${helper(CREATE_ELEMENT_VNODE)}("${tag}", ${props}, `);
+  genNode(children, context);
   push(")");
 }
 
@@ -98,7 +95,6 @@ function genFunctionPreamble(ast, push) {
   const VueBinging = "Vue";
   const aliasHelper = (s) => `${helperMapName[s]}: _${helperMapName[s]}`;
   if (ast.helpers.length) {
-    console.log(ast.helpers);
     push(`const { ${ast.helpers.map((str) => aliasHelper(str)).join(", ")} } = ${VueBinging}`);
     push("\n");
   }

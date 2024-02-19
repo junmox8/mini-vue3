@@ -50,5 +50,10 @@ function createTransformsContext(root, options) {
 }
 
 function createRootCodegen(root) {
-  root.codegenNode = root.children[0];
+  const child = root.children[0];
+  if (child.type === NodeTypes.ELEMENT) {
+    root.codegenNode = child.codegenNode; //{type,props,children,tag}
+  } else {
+    root.codegenNode = child;
+  }
 }
