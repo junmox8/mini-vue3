@@ -7,3 +7,7 @@ export function isObject(val) {
 export function isSame(val, newVal) {
   return val === newVal;
 }
+
+export function isString(val) {
+  return typeof val === "string";
+}

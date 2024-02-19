@@ -4,4 +4,5 @@ export const enum NodeTypes {
   ELEMENT,
   TEXT,
   ROOT,
+  COMPOUND_EXPRESSION, //复合类型 包含插值和text
 }

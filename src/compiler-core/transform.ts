@@ -12,7 +12,7 @@ function traverseNode(node, context) {
   const nodeTransforms = context.nodeTransforms;
   for (let i = 0; i <= nodeTransforms.length - 1; i++) {
     const nodeTransform = nodeTransforms[i];
-    nodeTransform(node);
+    nodeTransform(node, context);
   }
   switch (node.type) {
     case NodeTypes.INTERPOLATION:
@@ -20,6 +20,7 @@ function traverseNode(node, context) {
       break;
     case NodeTypes.ROOT:
     case NodeTypes.ELEMENT:
+    case NodeTypes.COMPOUND_EXPRESSION:
       //有children属性再进行递归
       traverseChildren(node, context);
       break;
