@@ -293,7 +293,7 @@ export function createRenderer(options) {
           //如果是初始化时，走此逻辑创建节点
           const { proxy } = instance;
           //在这里将初始化的子节点放到subTree中。
-          const subTree = (instance.subTree = instance.render.call(proxy));
+          const subTree = (instance.subTree = instance.render.call(proxy, proxy));
           patch(null, subTree, container, instance, anchor);
           vnode.el = subTree.el;
 
@@ -306,7 +306,7 @@ export function createRenderer(options) {
             updateComponentPreRender(instance, next);
           }
           //新节点
-          const subTree = instance.render.call(proxy);
+          const subTree = instance.render.call(proxy, proxy);
           const prevSubTree = instance.subTree;
 
           //再次更新子节点

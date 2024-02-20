@@ -58,8 +58,9 @@ function genCompoundExpression(node, context) {
 function genElement(node, context) {
   const { tag, children, props } = node;
   const { push, helper } = context;
-  push(`${helper(CREATE_ELEMENT_VNODE)}("${tag}", ${props}, `);
+  push(`${helper(CREATE_ELEMENT_VNODE)}("${tag}", `);
   genNode(children, context);
+  push(`, ${props}`);
   push(")");
 }
 

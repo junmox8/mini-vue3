@@ -1,5 +1,7 @@
 import { ShapeFlags } from "./ShapeFlags";
 
+export { createVNode as createElementVNode };
+
 export function createVNode(type, children?, props?) {
   const vnode = {
     type,
